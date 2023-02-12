@@ -5,23 +5,30 @@ from datetime import date
 from pathlib import Path
 import os
 import threading, time, signal
-import shutil
+import shutil 
+import configparser  
+  
+#Import config file
+current_directory = os.getcwd()
+config = configparser.ConfigParser()
+config.read('{}/backup.conf'.format(current_directory))  
+
+print("Read config")
 
 class ProgramKilled(Exception):
 	pass
 
 def backup():
-	myHome = Path('/home/YOURUSER/.litedoge')
+	myHome = Path(config["PATHS"]["myHome"])
 	now = datetime.now()
 
 	print(now)
 	print(myHome)
 
 	os.chdir(str(myHome))
+	strZipName = "LDOGE_Snapshot_{}.zip".format(str(datetime.now().isoformat()))
 
-	strZipName = 'LDOGE_Snapshot_' + str(datetime.now().isoformat()) + '.zip'
-
-	webFolder = Path("YOURWEBROOTPATH")
+	webFolder = Path(config["PATHS"]["webFolder"])
 
 	backFile = webFolder / 'tmp' / strZipName
 
@@ -40,7 +47,7 @@ def backup():
 		elif(os.path.isfile(file)):
 			zipObj.write(file)
 
-	finalFolder = webFolder / 'ldoge_snapshots'
+	finalFolder = config["PATHS"]["savingFolder"]
 	shutil.move(str(backFile), str(finalFolder))
 
 def signal_handler(signum, frame):
@@ -77,6 +84,6 @@ if __name__ == "__main__":
 		try:
 			time.sleep(1)
 		except ProgramKilled:
-			print ("LDOGE Backup killed")
+			print("LDOGE Backup killed")
 			job.stop()
 			break
